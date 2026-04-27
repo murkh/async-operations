@@ -7,11 +7,11 @@ services:
       - "8000:8000"
     environment:
       - MONGO_URI=mongodb://mongodb:27017
-      - REDIS_URI=redis://redis:6379/0
+      - REDIS_URL=redis://redis:6379/0
     depends_on:
       - mongodb
       - redis
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
   worker:
     build: 
@@ -19,11 +19,11 @@ services:
       target: worker
     environment:
       - MONGO_URI=mongodb://mongodb:27017
-      - REDIS_URI=redis://redis:6379/0
+      - REDIS_URL=redis://redis:6379/0
     depends_on:
       - mongodb
       - redis
-    command: python -m worker.main
+    command: uv run python -m worker.main
 
   mongodb:
     image: mongo:6.0
