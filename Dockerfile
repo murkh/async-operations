@@ -13,6 +13,7 @@ ENV PATH="/app/.venv/bin:$PATH"
 # Base app layer
 FROM base AS app
 COPY app /app/app
+COPY worker /app/worker
 ENV PYTHONPATH=/app
 CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
@@ -21,4 +22,4 @@ FROM base AS worker
 COPY app /app/app
 COPY worker /app/worker
 ENV PYTHONPATH=/app
-CMD ["uv", "run", "python", "-m", "worker.main"]
+CMD ["uv", "run", "celery", "-A", "worker.celery_app", "worker", "--loglevel=info"]

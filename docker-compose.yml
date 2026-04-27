@@ -8,6 +8,8 @@ services:
     environment:
       - MONGO_URI=mongodb://mongodb:27017
       - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:
       - mongodb
       - redis
@@ -20,10 +22,12 @@ services:
     environment:
       - MONGO_URI=mongodb://mongodb:27017
       - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
     depends_on:
       - mongodb
       - redis
-    command: uv run python -m worker.main
+    command: uv run celery -A worker.celery_app worker --loglevel=info -Q document_queue
 
   mongodb:
     image: mongo:6.0

@@ -1,6 +1,7 @@
 import hashlib
 import redis.asyncio as redis
 
+from worker.celery_app import celery_app
 from app.core.config import settings
 
 
@@ -61,7 +62,11 @@ class RedisService:
         await self.redis_client.delete(key)
 
     async def enqueue_doc(self, document_id: str):
-        await self.redis_client.rpush(self.queue_name, document_id)
+        celery_app.send_task(
+            "worker.main.process_document",
+            args=[str(document_id)],
+            queue=self.queue_name,
+        )
 
     async def can_process_job(self, user_id: str) -> bool:
         """Check if user has reached the active job limit."""
