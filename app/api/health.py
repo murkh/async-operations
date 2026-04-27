@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException
 
 from pymongo.database import Database
@@ -6,6 +7,7 @@ from app.services.redis_service import redis_service
 
 
 router = APIRouter(prefix="/health")
+logger = logging.getLogger(__name__)
 
 
 @router.get("")
@@ -29,6 +31,7 @@ async def health_check(db: Database = Depends(get_db)):
         health_status["status"] = "error"
 
     if health_status["status"] == "error":
+        logger.error(f"Health check failed: {health_status}")
         raise HTTPException(status_code=503, detail=health_status)
 
     return health_status

@@ -9,13 +9,10 @@ from app.core.database import connect_to_mongo, close_mongo_connection
 from app.services.redis_service import redis_service
 from app.schemas.documents import DocumentStatus
 from app.core.database import db_helper
-
+from app.core.logging import setup_logging
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
+setup_logging()
 logger = logging.getLogger("worker")
 
 
@@ -23,24 +20,30 @@ async def process_document(document_id: str):
 
     db = db_helper.db
 
-    # Fetch the document
-    doc = await db.documents.find_one({"_id": ObjectId(document_id)})
-    if not doc:
-        logger.warning(f"Document {document_id} not found in database")
-        return
-    content_hash = doc.get("content_hash")
-    user_id = doc.get("user_id")
-
-    logger.info(f"Processing document {document_id} (User: {user_id})")
-
-    await db.documents.update_one(
-        {"_id": ObjectId(document_id)},
+    # Atomically pick up and mark as processing
+    doc = await db.documents.find_one_and_update(
+        {
+            "_id": ObjectId(document_id),
+            "status": DocumentStatus.QUEUED
+        },
         {
             "$set": {
                 "status": DocumentStatus.PROCESSING,
                 "updated_at": datetime.now(timezone.utc),
             }
         },
+        return_document=True
+    )
+
+    if not doc:
+        logger.warning(f"Document {document_id} not found or already being processed")
+        return
+
+    content_hash = doc.get("content_hash")
+    user_id = doc.get("user_id")
+    logger.info(
+        f"Processing document {document_id} (User: {user_id})",
+        extra={"document_id": document_id, "user_id": user_id, "content_hash": content_hash}
     )
 
     max_retries = 3
@@ -53,7 +56,10 @@ async def process_document(document_id: str):
             if random.random() < 0.10:
                 raise Exception("Simulated network failure")
 
-            logger.info(f"Successfully processed document {document_id}")
+            logger.info(
+                f"Successfully processed document {document_id}",
+                extra={"document_id": document_id, "user_id": user_id}
+            )
             summary = f"Summary for: {doc.get('title', 'Unknown')}. Processing took {sleep_time:.2f} seconds. Content length: {len(doc.get('content', ''))} chars."
 
             update_filter = {
@@ -86,12 +92,15 @@ async def process_document(document_id: str):
             if attempt < max_retries - 1:
                 wait_backoff = 2**attempt
                 logger.warning(
-                    f"Attempt {attempt + 1} failed for {document_id}: {e}. Retrying in {wait_backoff}s..."
+                    f"Attempt {attempt + 1} failed for {document_id}: {e}. Retrying in {wait_backoff}s...",
+                    extra={"document_id": document_id, "attempt": attempt + 1, "error": str(e)}
                 )
                 await asyncio.sleep(wait_backoff)
             else:
                 logger.error(
-                    f"All attempts failed for document {document_id}. Marking as FAILED. Error: {e}"
+                    f"All attempts failed for document {document_id}. Marking as FAILED. Error: {e}",
+                    extra={"document_id": document_id, "error": str(e)},
+                    exc_info=True
                 )
                 update_filter = {
                     "content_hash": content_hash,

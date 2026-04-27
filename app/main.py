@@ -4,6 +4,10 @@ from app.core.database import connect_to_mongo, close_mongo_connection
 from app.services.redis_service import redis_service
 from app.api import router
 from app.core.exception_handler import setup_exception_handlers
+from app.core.logging import setup_logging
+from app.core.middleware import LoggingMiddleware
+
+setup_logging()
 
 
 @asynccontextmanager
@@ -21,5 +25,6 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+app.add_middleware(LoggingMiddleware)
 setup_exception_handlers(app)
 app.include_router(router=router)

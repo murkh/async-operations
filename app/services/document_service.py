@@ -1,5 +1,6 @@
 from datetime import datetime
 import math
+import logging
 from typing import Dict, Any, Optional
 from ..core.exceptions import (
     NotFoundException,
@@ -18,8 +19,10 @@ from ..schemas.documents import (
 class DocumentService:
     def __init__(self, repo: DocumentRepository):
         self.repo = repo
+        self.logger = logging.getLogger(__name__)
 
     async def create_document(self, doc: DocumentCreate) -> DocumentResponse:
+        self.logger.info(f"Creating document for user {doc.user_id}", extra={"user_id": doc.user_id})
         content_hash = RedisService.compute_hash(doc.content)
         cached_summary = await redis_service.get_cached_summary(content_hash)
 
@@ -31,9 +34,11 @@ class DocumentService:
 
         # Check rate limit
         if not await redis_service.can_process_job(doc.user_id):
+            self.logger.warning(f"Rate limit exceeded for user {doc.user_id}", extra={"user_id": doc.user_id})
             raise RateLimitException("Too many active documents")
 
         if cached_summary:
+            self.logger.info(f"Cache hit for document content hash {content_hash}", extra={"content_hash": content_hash})
             doc_dict["summary"] = cached_summary
             doc_dict["status"] = DocumentStatus.COMPLETED
 
@@ -47,17 +52,20 @@ class DocumentService:
         await redis_service.increment_active_jobs(doc.user_id)
 
         try:
-            is_inflight = await redis_service.is_hash_inflight(content_hash)
             doc_id = await self.repo.create(doc_dict)
-
-            if not is_inflight:
-                await redis_service.set_hash_inflight(content_hash)
+            self.logger.info(f"Document created with ID {doc_id}", extra={"doc_id": doc_id, "user_id": doc.user_id})
+            
+            # Atomically check and set inflight status
+            if await redis_service.set_hash_inflight(content_hash):
+                self.logger.info(f"Enqueueing document {doc_id}", extra={"doc_id": doc_id})
                 await redis_service.enqueue_doc(doc_id)
+            else:
+                self.logger.info(f"Document {doc_id} content is already being processed (inflight)", extra={"doc_id": doc_id, "content_hash": content_hash})
 
             doc_dict["id"] = doc_id
             return DocumentResponse(**doc_dict)
         except Exception as e:
-            print(f"Error creating document: {e}")
+            self.logger.error(f"Error creating document: {e}", extra={"user_id": doc.user_id}, exc_info=True)
             await redis_service.decrement_active_jobs(doc.user_id)
             raise e
 

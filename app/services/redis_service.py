@@ -1,3 +1,4 @@
+import logging
 import hashlib
 import redis.asyncio as redis
 
@@ -8,9 +9,16 @@ class RedisService:
     def __init__(self):
         self.redis_client = None
         self.queue_name = "document_queue"
+        self.logger = logging.getLogger(__name__)
 
     async def connect(self):
-        self.redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
+        try:
+            self.redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
+            await self.redis_client.ping()
+            self.logger.info("Successfully connected to Redis")
+        except Exception as e:
+            self.logger.error(f"Failed to connect to Redis: {e}", exc_info=True)
+            raise e
 
     async def close(self):
         if self.redis_client:
@@ -48,13 +56,12 @@ class RedisService:
         key = self._get_cache_key(content_hash)
         await self.redis_client.setex(key, settings.CACHE_TTL_SECONDS, summary)
 
-    async def is_hash_inflight(self, content_hash: str) -> bool:
+    async def set_hash_inflight(self, content_hash: str, ttl: int = 600) -> bool:
+        """Set hash as inflight only if it's not already there. Returns True if set, False otherwise."""
         key = self._get_inflight_key(content_hash)
-        return await self.redis_client.exists(key) > 0
-
-    async def set_hash_inflight(self, content_hash: str, ttl: int = 600):
-        key = self._get_inflight_key(content_hash)
-        await self.redis_client.setex(key, ttl, "1")
+        # Using set with nx=True makes it atomic: only sets if it doesn't exist
+        result = await self.redis_client.set(key, "1", ex=ttl, nx=True)
+        return result is True
 
     async def remove_hash_inflight(self, content_hash: str):
         key = self._get_inflight_key(content_hash)
