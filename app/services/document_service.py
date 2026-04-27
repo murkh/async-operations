@@ -8,6 +8,8 @@ from ..schemas.documents import (
     DocumentCreate,
     DocumentResponse,
     DocumentStatus,
+    DocumentUpdate,
+    DocumentListResponse,
 )
 
 
@@ -19,18 +21,23 @@ class DocumentService:
         content_hash = RedisService.compute_hash(doc.content)
         cached_summary = await redis_service.get_cached_summary(content_hash)
 
-        now = datetime.now()
-        doc_dict = doc.dict()
+        now = datetime.utcnow()
+        doc_dict = doc.model_dump()
         doc_dict["created_at"] = now
         doc_dict["updated_at"] = now
 
+        # Check rate limit
+        if not await redis_service.can_process_job(doc.user_id):
+            from ..core.exceptions import RateLimitException
+            raise RateLimitException("Too many active documents")
+
         if cached_summary:
             doc_dict["summary"] = cached_summary
-            doc_dict["status"] = DocumentStatus.PROCESSED
+            doc_dict["status"] = DocumentStatus.COMPLETED
 
             doc_id = await self.repo.create(doc_dict)
             doc_dict["id"] = doc_id
-            return doc_dict
+            return DocumentResponse(**doc_dict)
 
         doc_dict["status"] = DocumentStatus.QUEUED
         doc_dict["summary"] = None
@@ -46,7 +53,7 @@ class DocumentService:
                 await redis_service.enqueue_doc(doc_id)
 
             doc_dict["id"] = doc_id
-            return doc_dict
+            return DocumentResponse(**doc_dict)
         except Exception as e:
             print(f"Error creating document: {e}")
             await redis_service.decrement_active_jobs(doc.user_id)
@@ -83,3 +90,23 @@ class DocumentService:
             "page_size": page_size,
             "pages": math.ceil(total / page_size) if total > 0 else 0,
         }
+
+    async def update_document(self, doc_id: str, doc_update: DocumentUpdate) -> DocumentResponse:
+        """Update a document and return the updated version."""
+        update_data = doc_update.model_dump(exclude_unset=True)
+        if not update_data:
+            return await self.get_document(doc_id)
+
+        update_data["updated_at"] = datetime.utcnow()
+        success = await self.repo.update(doc_id, update_data)
+        if not success:
+             raise NotFoundException("Document not found or update failed")
+        
+        return await self.get_document(doc_id)
+
+    async def delete_document(self, doc_id: str) -> bool:
+        """Delete a document."""
+        success = await self.repo.delete(doc_id)
+        if not success:
+            raise NotFoundException("Document not found")
+        return True

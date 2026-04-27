@@ -40,3 +40,19 @@ class DocumentRepository:
         total = await self.collection.count_documents(query)
 
         return docs, total
+
+    async def update(self, doc_id: str, update_data: dict) -> bool:
+        """Update a document by its ID."""
+        if not ObjectId.is_valid(doc_id):
+            return False
+        result = await self.collection.update_one(
+            {"_id": ObjectId(doc_id)}, {"$set": update_data}
+        )
+        return result.modified_count > 0
+
+    async def delete(self, doc_id: str) -> bool:
+        """Delete a document by its ID."""
+        if not ObjectId.is_valid(doc_id):
+            return False
+        result = await self.collection.delete_one({"_id": ObjectId(doc_id)})
+        return result.deleted_count > 0

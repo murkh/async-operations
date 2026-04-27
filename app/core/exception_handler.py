@@ -13,6 +13,7 @@ def setup_exception_handlers(app: FastAPI) -> None:
             "status": "error",
             "code": exc.status_code,
             "message": exc.detail,
+            "detail": exc.detail,
         }
         if settings.DEBUG:
             content["traceback"] = "".join(

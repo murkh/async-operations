@@ -26,6 +26,9 @@ class RedisService:
     def _get_inflight_key(self, content_hash: str) -> str:
         return f"inflight:{content_hash}"
 
+    def _get_cache_key(self, content_hash: str) -> str:
+        return f"cache:{content_hash}"
+
     async def increment_active_jobs(self, user_id: str):
         key = self._get_user_job_key(user_id)
         await self.redis_client.incr(key)
