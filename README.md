@@ -19,7 +19,7 @@ The Document Insights API allows users to submit documents for processing. Inste
 
 - **Framework**: [FastAPI](https://fastapi.tiangolo.com/)
 - **Language**: [Python 3.11+](https://www.python.org/)
-- **Database**: [MongoDB](https://www.mongodb.com/) (Motor driver for async support)
+- **Database**: [MongoDB](https://www.mongodb.com/)
 - **Task Queue & Cache**: [Redis](https://redis.io/)
 - **Package Manager**: [uv](https://github.com/astral-sh/uv)
 - **Containerization**: Docker & Docker Compose
