@@ -7,8 +7,8 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379"
     REDIS_DB: int = 0
     DEBUG: bool = False
-    cache_ttl_seconds: int = 3600
-    max_active_jobs_per_user: int = 3
+    CACHE_TTL_SECONDS: int = 3600
+    MAX_ACTIVE_JOBS_PER_USER: int = 3
 
     model_config = SettingsConfigDict(env_file=".env")
 

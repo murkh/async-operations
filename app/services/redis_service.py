@@ -46,7 +46,7 @@ class RedisService:
 
     async def cache_summary(self, content_hash: str, summary: str):
         key = self._get_cache_key(content_hash)
-        await self.redis_client.setex(key, settings.cache_ttl_seconds, summary)
+        await self.redis_client.setex(key, settings.CACHE_TTL_SECONDS, summary)
 
     async def is_hash_inflight(self, content_hash: str) -> bool:
         key = self._get_inflight_key(content_hash)
@@ -63,7 +63,7 @@ class RedisService:
         """Check if user has reached the active job limit."""
         key = self._get_user_job_key(user_id)
         current_jobs = await self.redis_client.get(key)
-        if current_jobs and int(current_jobs) >= settings.max_active_jobs_per_user:
+        if current_jobs and int(current_jobs) >= settings.MAX_ACTIVE_JOBS_PER_USER:
             return False
         return True
 
