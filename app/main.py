@@ -10,6 +10,8 @@ from app.core.exception_handler import setup_exception_handlers
 async def lifespan(app: FastAPI):
     # startup
     await connect_to_mongo()
+    from app.core.database import init_db
+    await init_db()
     await redis_service.connect()
     yield
 

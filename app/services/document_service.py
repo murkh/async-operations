@@ -25,6 +25,7 @@ class DocumentService:
 
         now = datetime.utcnow()
         doc_dict = doc.model_dump()
+        doc_dict["content_hash"] = content_hash
         doc_dict["created_at"] = now
         doc_dict["updated_at"] = now
 

@@ -26,6 +26,7 @@ class DocumentResponse(BaseModel):
     content: str = Field(..., min_length=1)
     summary: str | None = Field(None)
     status: DocumentStatus = Field(default=DocumentStatus.QUEUED)
+    content_hash: str | None = Field(None)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 

@@ -1,4 +1,4 @@
-from pymongo import AsyncMongoClient
+from pymongo import AsyncMongoClient, ASCENDING
 from .config import settings
 
 
@@ -8,6 +8,20 @@ class MongoDB:
 
 
 db_helper = MongoDB()
+
+
+async def init_db():
+    if db_helper.db is not None:
+        # For list_by_user without status filter
+        await db_helper.db.documents.create_index(
+            [("user_id", ASCENDING), ("created_at", -1)]
+        )
+        # For list_by_user with status filter (ESR: user_id=eq, status=eq, created_at=sort)
+        await db_helper.db.documents.create_index(
+            [("user_id", ASCENDING), ("status", ASCENDING), ("created_at", -1)]
+        )
+        # For deduplication and content-based lookups
+        await db_helper.db.documents.create_index([("content_hash", ASCENDING)])
 
 
 async def connect_to_mongo():

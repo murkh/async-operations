@@ -29,7 +29,11 @@ class DocumentRepository:
         status: Optional[DocumentStatus] = None,
     ) -> Tuple[List[dict], int]:
         """List documents for a user with pagination and optional status filter."""
-        query = {"user_id": user_id}
+        search_user_id = user_id
+        if isinstance(user_id, str) and ObjectId.is_valid(user_id):
+            search_user_id = ObjectId(user_id)
+
+        query = {"user_id": search_user_id}
         if status:
             query["status"] = status.value
 
