@@ -5,7 +5,7 @@ services:
       target: app
     ports:
       - "8000:8000"
-    env_file:
+    environment:
       - MONGO_URI=mongodb://mongodb:27017
       - REDIS_URI=redis://redis:6379/0
     depends_on:
@@ -17,7 +17,7 @@ services:
     build: 
       context: .
       target: worker
-    env_file:
+    environment:
       - MONGO_URI=mongodb://mongodb:27017
       - REDIS_URI=redis://redis:6379/0
     depends_on:
