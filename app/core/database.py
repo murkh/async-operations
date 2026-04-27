@@ -11,8 +11,8 @@ db_helper = MongoDB()
 
 
 async def connect_to_mongo():
-    db_helper.client = AsyncMongoClient(settings.mongo_uri)
-    db_helper.db = db_helper.client[settings.db_name]
+    db_helper.client = AsyncMongoClient(settings.MONGO_URI)
+    db_helper.db = db_helper.client[settings.MONGO_DB]
 
 
 async def close_mongo_connection():

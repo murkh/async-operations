@@ -19,8 +19,8 @@ class DocumentCreate(BaseModel):
     model_config = ConfigDict(populate_by_name=True, arbitrary_types_allowed=True)
 
 
-class DocuementResponse(BaseModel):
-    _id: PyObjectId = Field(..., alias="_id")
+class DocumentResponse(BaseModel):
+    id: PyObjectId = Field(..., alias="_id")
     title: str = Field(..., min_length=1, max_length=100)
     user_id: PyObjectId = Field(...)
     content: str = Field(..., min_length=1)

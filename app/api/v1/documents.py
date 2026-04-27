@@ -1,8 +1,8 @@
 from fastapi import APIRouter, status, Depends
 
-from app.models.schemas import DocumentResponse, DocumentCreate
+from app.schemas.documents import DocumentResponse, DocumentCreate
 from app.services.document_service import DocumentService
-from app.api.deps import get_document_service
+from app.services.deps import get_document_service
 
 
 router = APIRouter(prefix="/documents")

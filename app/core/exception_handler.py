@@ -14,7 +14,7 @@ def setup_exception_handlers(app: FastAPI) -> None:
             "code": exc.status_code,
             "message": exc.detail,
         }
-        if settings.debug:
+        if settings.DEBUG:
             content["traceback"] = "".join(
                 traceback.format_exception(type(exc), exc, exc.__traceback__)
             )
@@ -25,7 +25,9 @@ def setup_exception_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(RequestValidationError)
-    async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    async def validation_exception_handler(
+        request: Request, exc: RequestValidationError
+    ):
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             content={
@@ -43,7 +45,7 @@ def setup_exception_handlers(app: FastAPI) -> None:
             "code": status.HTTP_500_INTERNAL_SERVER_ERROR,
             "message": "Internal server error",
         }
-        if settings.debug:
+        if settings.DEBUG:
             content["message"] = str(exc)
             content["traceback"] = "".join(
                 traceback.format_exception(type(exc), exc, exc.__traceback__)

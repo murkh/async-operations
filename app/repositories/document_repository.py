@@ -2,7 +2,7 @@ from typing import Optional, List, Tuple
 from bson import ObjectId
 
 from pymongo.database import Database
-from app.schemas import DocumentStatus
+from app.schemas.documents import DocumentStatus
 
 
 class DocumentRepository:

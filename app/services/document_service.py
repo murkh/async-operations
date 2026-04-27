@@ -4,7 +4,7 @@ from typing import Dict, Any, Optional
 from ..core.exceptions import InternalServerException, NotFoundException
 from .redis_service import redis_service, RedisService
 from ..repositories.document_repository import DocumentRepository
-from ..models.schemas import (
+from ..schemas.documents import (
     DocumentCreate,
     DocumentResponse,
     DocumentStatus,

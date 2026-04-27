@@ -10,7 +10,7 @@ class RedisService:
         self.queue_name = "document_queue"
 
     async def connect(self):
-        self.redis_client = redis.from_url(settings.redis_uri, decode_responses=True)
+        self.redis_client = redis.from_url(settings.REDIS_URL, decode_responses=True)
 
     async def close(self):
         if self.redis_client:
