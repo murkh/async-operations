@@ -11,7 +11,8 @@ The Document Insights API allows users to submit documents for processing. Inste
 - **Asynchronous Task Queueing**: Leverages Redis for high-performance task management.
 - **Resilient Background Worker**: Processes tasks with built-in retry logic and exponential backoff.
 - **Content-Aware Caching**: Uses SHA-256 content hashing to identify duplicate documents and serve cached results instantly.
-- **Rate Limiting**: Intelligent job limiting based on active concurrent tasks per user.
+- **API Rate Limiting**: Redis-backed sliding-window rate limiting to protect endpoints from abuse.
+- **Intelligent Job Limiting**: Concurrent task limiting per user to ensure fair resource allocation.
 - **Service-Repository Pattern**: Clean, maintainable code architecture decoupling business logic from data access.
 - **Full Docker Support**: Easy orchestration of API, Worker, MongoDB, and Redis services.
 
@@ -83,6 +84,14 @@ The API will be available at `http://localhost:8000`. You can access the interac
    uv run python -m worker.main
    ```
 
+### Configuration
+
+You can customize the rate limiting behavior in `app/core/config.py` or via environment variables:
+
+- `RATE_LIMIT_REQUESTS`: Number of requests allowed (default: 100)
+- `RATE_LIMIT_WINDOW_SECONDS`: Time window in seconds (default: 60)
+- `MAX_ACTIVE_JOBS_PER_USER`: Maximum concurrent processing tasks (default: 3)
+
 ## 🔌 API Endpoints
 
 ### Documents
@@ -118,6 +127,7 @@ uv run pytest
 - **Content Hashing**: Documents are hashed using SHA-256. If a document with the same content is submitted again, the system can bypass processing and return a cached summary, saving compute resources.
 - **Concurrent Job Limiting**: To prevent a single user from monopolizing the worker pool, a configurable limit on active jobs per user is enforced at the API level.
 - **Idempotent Workers**: The worker implementation ensures that multiple attempts to process the same task result in a consistent state, handling potential race conditions during status updates.
+- **Sliding-Window Rate Limiting**: Implements a Redis Sorted Set-based sliding window algorithm for API rate limiting. This provides more accurate limiting than fixed-window approaches by preventing traffic bursts at window boundaries.
 
 ## 📈 Future Improvements
 

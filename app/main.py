@@ -6,6 +6,7 @@ from app.api import router
 from app.core.exception_handler import setup_exception_handlers
 from app.core.logging import setup_logging
 from app.core.middleware import LoggingMiddleware
+from app.core.rate_limit import RateLimitMiddleware
 
 setup_logging()
 
@@ -25,6 +26,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+app.add_middleware(RateLimitMiddleware)
 app.add_middleware(LoggingMiddleware)
 setup_exception_handlers(app)
 app.include_router(router=router)

@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     CACHE_TTL_SECONDS: int = 3600
     MAX_ACTIVE_JOBS_PER_USER: int = 3
+    RATE_LIMIT_REQUESTS: int = 100  # Number of requests
+    RATE_LIMIT_WINDOW_SECONDS: int = 60  # Window in seconds
 
     model_config = SettingsConfigDict(env_file=".env")
 
