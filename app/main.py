@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from app.core.database import connect_to_mongo, close_mongo_connection
 from app.api import router
+from app.core.exception_handler import setup_exception_handlers
 
 
 @asynccontextmanager
@@ -15,4 +16,5 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+setup_exception_handlers(app)
 app.include_router(router=router)

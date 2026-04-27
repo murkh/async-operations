@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     mongo_db: str = "async_operations"
     redis_url: str = "redis://localhost:6379"
     redis_db: int = 0
+    debug: bool = False
 
     model_config = SettingsConfigDict(env_file=".env")
 
