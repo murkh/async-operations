@@ -56,6 +56,10 @@ class RedisService:
         key = self._get_inflight_key(content_hash)
         await self.redis_client.setex(key, ttl, "1")
 
+    async def remove_hash_inflight(self, content_hash: str):
+        key = self._get_inflight_key(content_hash)
+        await self.redis_client.delete(key)
+
     async def enqueue_doc(self, document_id: str):
         await self.redis_client.rpush(self.queue_name, document_id)
 

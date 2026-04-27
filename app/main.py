@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from app.core.database import connect_to_mongo, close_mongo_connection
+from app.services.redis_service import redis_service
 from app.api import router
 from app.core.exception_handler import setup_exception_handlers
 
@@ -9,10 +10,12 @@ from app.core.exception_handler import setup_exception_handlers
 async def lifespan(app: FastAPI):
     # startup
     await connect_to_mongo()
+    await redis_service.connect()
     yield
 
     # shutdown
     await close_mongo_connection()
+    await redis_service.close()
 
 
 app = FastAPI(lifespan=lifespan)
