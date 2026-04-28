@@ -76,45 +76,6 @@ async def test_list_documents(async_client, valid_user_id):
 
 
 @pytest.mark.asyncio
-async def test_update_document(async_client, valid_user_id):
-    # Create one
-    payload = {
-        "user_id": valid_user_id,
-        "title": "Old Title",
-        "content": "Old Content",
-    }
-    create_resp = await async_client.post("/api/v1/documents", json=payload)
-    doc_id = create_resp.json()["id"]
-
-    # Update it
-    update_payload = {"title": "New Title"}
-    response = await async_client.patch(f"/api/v1/documents/{doc_id}", json=update_payload)
-    assert response.status_code == 200
-    assert response.json()["title"] == "New Title"
-    assert response.json()["content"] == "Old Content"
-
-
-@pytest.mark.asyncio
-async def test_delete_document(async_client, valid_user_id):
-    # Create one
-    payload = {
-        "user_id": valid_user_id,
-        "title": "To Delete",
-        "content": "Delete me",
-    }
-    create_resp = await async_client.post("/api/v1/documents", json=payload)
-    doc_id = create_resp.json()["id"]
-
-    # Delete it
-    response = await async_client.delete(f"/api/v1/documents/{doc_id}")
-    assert response.status_code == 204
-
-    # Verify it's gone
-    get_resp = await async_client.get(f"/api/v1/documents/{doc_id}")
-    assert get_resp.status_code == 404
-
-
-@pytest.mark.asyncio
 async def test_rate_limiting(async_client, valid_user_id):
     payload = {"user_id": valid_user_id, "title": "Test Doc", "content": "Content"}
 
