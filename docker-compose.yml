@@ -20,6 +20,9 @@ services:
     environment:
       - MONGO_URI=mongodb://mongodb:27017
       - REDIS_URL=redis://redis:6379/0
+      - CONCURRENCY_LIMIT=5
+    deploy:
+      replicas: 2
     depends_on:
       - mongodb
       - redis
